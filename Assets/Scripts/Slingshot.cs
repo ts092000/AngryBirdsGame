@@ -21,6 +21,10 @@ public class Slingshot : MonoBehaviour
 
     public float birdPositionOffset;
 
+    public Trajectory trajectory;
+
+
+
     Rigidbody2D bird;
     Collider2D birdCollider;
 
@@ -38,12 +42,15 @@ public class Slingshot : MonoBehaviour
 
     void CreateBird()
     {
+        trajectory.Hide();
+
         bird = Instantiate(birdPrefab).GetComponent<Rigidbody2D>();
         birdCollider = bird.GetComponent<Collider2D>();
         birdCollider.enabled = false;
 
         bird.isKinematic = true;
 
+        
         ResetStrips();
     }
 
@@ -52,6 +59,10 @@ public class Slingshot : MonoBehaviour
     {
         if (isMouseDown)
         {
+            bird.isKinematic = false;
+            Vector3 birdForce = (currentPosition - center.position) * force * -1;
+            bird.velocity = birdForce;
+
             Vector3 mousePosition = Input.mousePosition;
             mousePosition.z = 10;
 
@@ -75,24 +86,35 @@ public class Slingshot : MonoBehaviour
 
     private void OnMouseDown()
     {
-        isMouseDown= true;
+        isMouseDown = true;
     }
 
     private void OnMouseUp()
     {
+        trajectory.Hide();
         isMouseDown = false;
+
         Shoot();
+    }
+
+    private void OnMouseDrag()
+    {
+        Vector3 birdForce = (currentPosition - center.position) * force * -1;
+        trajectory.UpdateDots(currentPosition, birdForce);
+        trajectory.Show();
     }
 
     void Shoot()
     {
         bird.isKinematic = false;
-        Vector3 birdForce = (currentPosition- center.position) * force * -1;
+        Vector3 birdForce = (currentPosition - center.position) * force * -1;
         bird.velocity = birdForce;
 
         bird = null;
         birdCollider = null;
         Invoke("CreateBird", 2);
+
+
     }
 
     void ResetStrips()
@@ -112,6 +134,7 @@ public class Slingshot : MonoBehaviour
             bird.transform.position = position + direction.normalized * birdPositionOffset;
             bird.transform.right = -direction.normalized;
         }
+
     }
 
     Vector3 ClampBoundary(Vector3 vector)
